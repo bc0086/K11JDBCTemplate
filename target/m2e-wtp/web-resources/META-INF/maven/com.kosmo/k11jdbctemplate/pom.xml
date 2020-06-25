@@ -14,7 +14,10 @@
 		<org.slf4j-version>1.6.6</org.slf4j-version>
 	</properties>
 	
-	<!-- 오라클 JDBC 원격 레파지토리(저장소) -->
+	<!-- 
+		오라클 JDBC 원격 레파지토리(저장소) 
+		(저작권 문제로 사용자가 직접 작성해야햠.)
+	-->
 	<repositories>
 		<repository>
 			<id>oracle</id>

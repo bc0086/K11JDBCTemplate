@@ -2,6 +2,10 @@ package model;
 
 import org.springframework.jdbc.core.JdbcTemplate;
 
+/*
+ 	해당 웹 어플리케이션 전체에서 사용하기 위해 setter(정적)
+ 	변수를 가진 클래스를 하나 생성한다.
+ */
 public class JdbcTemplateConst {
 
 	/*
@@ -10,4 +14,5 @@ public class JdbcTemplateConst {
 	 */
 	public static JdbcTemplate template;
 	
+	   
 }
