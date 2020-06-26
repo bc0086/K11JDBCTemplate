@@ -198,7 +198,7 @@ public class BbsController {
 		return "07Board/reply";
 	}
 	
-	// 답변글 쓰기 처리
+	// 답변글 쓰기 처리  
 	@RequestMapping("/board/replyAction.do")
 	public String replyAction(HttpServletRequest req,
 			Model model, SpringBbsDTO springBbsDTO) {
