@@ -1,9 +1,28 @@
 package springboard.model;
 
+import java.io.InputStream;
+import java.io.Reader;
+import java.math.BigDecimal;
+import java.net.URL;
+import java.sql.Array;
+import java.sql.Blob;
+import java.sql.Clob;
 import java.sql.Connection;
+import java.sql.Date;
+import java.sql.NClob;
+import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
+import java.sql.Ref;
+import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
+import java.sql.RowId;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
+import java.sql.SQLXML;
+import java.sql.Time;
+import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Map;
 
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
@@ -72,7 +91,8 @@ public class JDBCTemplateDAO {
 				sql +=" WHERE "+map.get("Column")+" "
 					+ " LIKE '%"+map.get("Word")+"%' ";
 			}
-			sql += " ORDER BY idx DESC ";
+			// sql += " ORDER BY idx DESC "; //-> 답변글 사용하지 않을 경우
+			sql += " ORDER BY bgroup DESC, bstep ASC "; ///-> 답변글 적용시...
 		
 		/*
 		 	query메소드의 반환타입은 List계열의 컬렉션이므로 제네릭부분만
@@ -173,5 +193,123 @@ public class JDBCTemplateDAO {
 		
 		return retNum;
 	}
+	
+	// 수정처리
+	public void edit(final SpringBbsDTO dto) {
+		/*
+		 	해당 게시판에서 패스워드는 변경의 대상이 아니라
+		 	검증의 대상으로만 사용됨.
+		 	따라서 set절이 아니라 where절에 삽입된다.
+		 */
+		String sql = "UPDATE springboard SET name=?, title=?, contents=? WHERE idx=? AND pass=?";
+		
+		/*
+	        매개변수 dto객체를 아래 익명클래스 내부에서 사용해야 하므로
+	        반드시 final을 붙여줘야 한다. 
+	     */
+		template.update(sql, new PreparedStatementSetter() { 
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+				ps.setString(1, dto.getName());
+				ps.setString(2, dto.getTitle());
+				ps.setString(3, dto.getContents());
+				ps.setInt(4, dto.getIdx());
+				ps.setString(5, dto.getPass());
+			}
+		});
+	}
+	
+	//삭제처리
+	public void delete(final String idx, final String pass) {
+		
+		String sql = "DELETE FROM springboard " + " WHERE idx=? AND pass=? ";
+		
+		template.update(sql, new PreparedStatementSetter () {
+			@Override
+			public void setValues(PreparedStatement ps)
+				throws SQLException {
+				ps.setString(1, idx);
+				ps.setString(2, pass);
+			}
+		});
+	}
+	
+	// 답변글 쓰기
+	public void reply(final SpringBbsDTO dto) {
+		
+		// 답변글쓰기전 레코드 업데이트
+		replyPrevUpdate(dto.getBgroup(), dto.getBstep());
+		
+		/*
+		 	원본글의 경우 idx와 bgroup은 동일한 값을 입력함.
+		 	답변글의 경우 원본글의 group번호를 그대로 가져와서 입력함.
+		 	idx은 시퀀스를 통해 bgroup은 원본글과 동일하게 입력.
+		 */
+		String sql = "INSERT INTO springboard "
+			+ " (idx, name, title, contents, pass, "
+			+ " bgroup, bstep, bindent) "
+			+ " VALUES "
+			+ " (springboard_seq.nextval, ?, ?, ?, ?, "
+			+ " ?, ?, ?)";
+
+		/*
+		 	답변글인 경우 원본글의 step+1, indent+1 처리하여 입력한다.
+		 */
+		template.update(sql, new PreparedStatementSetter() {
+			
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+				ps.setString(1, dto.getName());
+				ps.setString(2, dto.getTitle());
+				ps.setString(3, dto.getContents());
+				ps.setString(4, dto.getPass());
+				ps.setInt(5, dto.getBgroup());
+				ps.setInt(6, dto.getBstep()+1);
+				ps.setInt(7, dto.getBindent()+1);
+			}
+		});
+	}
+	
+	// 답변글 입력전 레코드 일괄 업데이트(step을 뒤로 밀어주기 위한 로직)
+	public void replyPrevUpdate(final int strGroup, final int strStep) {
+		
+		String sql = "update springboard "
+				+ " set bstep = bstep + 1 "
+				+ " where bgroup=? and bstep>?";
+		template.update(sql, new PreparedStatementSetter() {
+			
+			@Override
+			public void setValues(PreparedStatement ps) throws SQLException {
+				ps.setInt(1, strGroup);
+				ps.setInt(2, strStep);
+			}
+		});
+	}
+	
+	// 리스트처리(페이지o)
+	public ArrayList<SpringBbsDTO> listPage(Map<String, Object> map){
+
+		int start = Integer.parseInt(map.get("start").toString());
+		int end = Integer.parseInt(map.get("end").toString());
+		
+		String sql = ""
+				+"SELECT * FROM ("
+				+"    SELECT Tb.*, rownum rNum FROM ("
+				+"        SELECT * FROM springboard ";				
+			if(map.get("Word")!=null){
+				sql +=" WHERE "+map.get("Column")+" "
+					+ " LIKE '%"+map.get("Word")+"%' ";				
+			}			
+			sql += " ORDER BY bgroup DESC, bstep ASC"
+			+"    ) Tb"
+			+")"
+			+" WHERE rNum BETWEEN "+start+" and "+end;
+		
+		return (ArrayList<SpringBbsDTO>)
+			template.query(sql, 
+				new BeanPropertyRowMapper<SpringBbsDTO>(
+				SpringBbsDTO.class));
+	}
+
 
 }
