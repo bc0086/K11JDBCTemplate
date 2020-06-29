@@ -44,12 +44,12 @@ $(function(){
          <input type="text" name="name" style="width:50%;" />
       </td>
    </tr>
-   <!-- <tr>
+   <tr>
       <td>패스워드</td>
       <td>
          <input type="password" name="pass" style="width:30%;" />
       </td>
-   </tr> -->
+   </tr>
    <tr>
       <td>제목</td>
       <td>

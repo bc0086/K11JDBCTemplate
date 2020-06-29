@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 
@@ -16,8 +17,15 @@ import springboard.model.SpringBbsDTO;
   		하는 클래스임을 표기하는 역할을 함
   		@Override처럼 반드시 있어야 하는것은 아님.
  */
-@Service("BbsCommandImpl")
+@Service
 public class EditActionCommand implements BbsCommandImpl{
+	
+	JDBCTemplateDAO dao;
+	@Autowired
+	public void setDao(JDBCTemplateDAO dao) {
+		this.dao = dao;
+		System.out.println("JDBCTemplateDAO 자동주입(EditAction)");
+	}
 	
 	@Override
 	public void execute(Model model) {
@@ -27,7 +35,7 @@ public class EditActionCommand implements BbsCommandImpl{
 		// 폼값을 한꺼번에 받아 저장한 커맨드객체를 가져옴.
 		SpringBbsDTO springBbsDTO = (SpringBbsDTO)map.get("springBbsDTO");
 		
-		JDBCTemplateDAO dao = new JDBCTemplateDAO();
+		// JDBCTemplateDAO dao = new JDBCTemplateDAO();
 		
 		/*
 		 	폼값을 개별적으로 받음 
